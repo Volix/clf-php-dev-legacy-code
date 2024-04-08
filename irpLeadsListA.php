@@ -1,5 +1,5 @@
 <?php
-// Zabezpieczenia 
+// Zabezpieczenia
 if(!$dostep_koordynator){$alert = 'notAllowed';}
 
 function breadcrumb(){ ?>
@@ -17,7 +17,7 @@ foreach ($pracownicy as $key => $value) {
     }
 }
 
-// Podpowiedzi kolejnych tygodni 
+// Podpowiedzi kolejnych tygodni
 $wypisz_tygodnie = "";
 $ten_tydzien_poniedzialek = strtotime('last Monday',strtotime('tomorrow'));
 $ten_tydzien_niedziela = strtotime('next Sunday',$ten_tydzien_poniedzialek);
@@ -32,11 +32,11 @@ for ($i = 0; $i < 9; $i++) {
 
     $kolejny_poniedzialek = strtotime('next Monday',$poprzedni_poniedzialek);
     $kolejna_niedziela    = strtotime('next Sunday',$kolejny_poniedzialek);
-    $wypisz_tygodnie .= '<option value="'.$kolejny_poniedzialek.'">od '.date('d-m',$kolejny_poniedzialek).' do '.date('d-m',$kolejna_niedziela).'</option>';    
+    $wypisz_tygodnie .= '<option value="'.$kolejny_poniedzialek.'">od '.date('d-m',$kolejny_poniedzialek).' do '.date('d-m',$kolejna_niedziela).'</option>';
     $poprzedni_poniedzialek = $kolejny_poniedzialek;
 }
-    
- 
+
+
 // HTML
 breadcrumb();
 alert($alert); ?>
@@ -64,6 +64,7 @@ alert($alert); ?>
                         <th>Telefon</th>
                         <th>E-mail</th>
                         <th style="width: 60px;">Level</th>
+                        <th>Produkt</th>
                         <th style="width: 50px;">zaznacz</th>
                     </tr>
                 </thead>
@@ -71,8 +72,8 @@ alert($alert); ?>
             </table>
         </div>
     </div>
-    
-    
+
+
     <div id="leady-1" class="grupa-leadow">
         <h2>SEGMENT I: Od 4 lekcji PR + Klub</h2>
         <div class="input-group" style="display: inline-block;">
@@ -92,6 +93,7 @@ alert($alert); ?>
                         <th>Telefon</th>
                         <th>E-mail</th>
                         <th style="width: 60px;">Level</th>
+                        <th>Produkt</th>
                         <th style="width: 50px;">zaznacz</th>
                     </tr>
                 </thead>
@@ -128,7 +130,7 @@ alert($alert); ?>
                     <label for="edytuj-termin-input">Wybierz termin*</label>
                     <select id="edytuj-termin-input" class="form-control" name="tydzien">
                         <?=$wypisz_tygodnie?>
-                    </select>                    
+                    </select>
                 </div>
                 <div><!-- PRZYCISKI ZAPISZ/ANULUJ -->
                     <button type="button" class="btn btn-md btn-warning btn-zamknij-light-box">Anuluj <span class="glyphicon glyphicon-remove"></span></button>
@@ -146,14 +148,31 @@ window.onload = function()
     // ZAZNACZ WIELE LEADOW I WYŚWIETL FORMULARZ
     $(document).on('click','.btn-add-task-to-many',function(e)
     {
-        
+        ev.preventDefault();
+        let elem = $(ev.target);
+        let count = Number(elem.attr('data-ile'));
 
-        
+        if (count === 0) {
+            elem.parents('grupa-leadow').find('input[type="checkbox"]:checked').each((item) => {
+                item.removeAttr("checked");
+            })
+        } else {
+            let i = 0;
+            elem.parents('grupa-leadow').find('input[type="checkbox"]:not(:checked)').each((item) => {
+                if (i < count) {
+                    item.attr("checked", "checked");
+                }
+                i++;
+            });
 
+            var grupa_leadow =  elem.parents('grupa-leadow');
 
+            $('#czarne-tlo-przydziel-zadanie-form').show();
+            $('#czarne-tlo-przydziel-zadanie-form input[name="grupa_leadow"]').val($(grupa_leadow).attr('id'));
+        }
 
     });
-    
+
 
     //ładne formatowanie tabeli
     $('.tabela-leadow').DataTable({
@@ -163,7 +182,7 @@ window.onload = function()
         "language": {"url": "//cdn.datatables.net/plug-ins/1.10.7/i18n/Polish.json"},
         fnDrawCallback: function(){$("[data-toggle='tooltip']",this.fnGetNodes()).tooltip({"delay": 0,"track": true,"fade": 250});}
     });
-    
+
     // WYŚWIETL FORMULARZ TYLKO DLA ZAZNACZONYCH
     $(document).on('click','.btn-add-task-to-checked',function(e)
     {
@@ -185,13 +204,13 @@ window.onload = function()
     $(document).on('submit','#przydziel-zadanie-form',function(e)
     {
         e.preventDefault();
-       
+
         var czy_pusta = $('#edytuj-termin-input').val().trim()==='' || $('#edytuj-pracownika-input').val().trim()==='';
         if(czy_pusta){
             bootbox.alert("Uzupełnij wszystkie wymagane pola.");
             return false;
         }
-        
+
         var tydzien= $('#edytuj-termin-input').val();
         var pracownik= $('#edytuj-pracownika-input').val();
         var grupa_leadow = $('#'+$('#czarne-tlo-przydziel-zadanie-form input[name="grupa_leadow"]').val());
@@ -236,10 +255,10 @@ window.onload = function()
             return false;
         }
     });
-    
+
 
     $(document).ready(pokaz_leady());
-    
+
 };
 
 
@@ -266,17 +285,19 @@ function  pokaz_leady(){
                     var d2 = ((d1.length === 11 || d1.length === 12) && d1.indexOf("48")===0) ? d1.substr(2) : d1;
                     var d3 = ((d2.length === 10) && d2.indexOf("0")===0) ? d2.substr(1) : d2;
                     var d4 = (d3.length === 9 ) ? d3.replace(/^(\d{3})(\d{3})(\d{3})$/, '$1 $2 $3') : v.telefon;
-                    var level = v.level === 'klient' ? '<span class="label label-primary">KLIENT</span>' : '<span class="label label-success">UCZESTNIK</span>';                
+                    var level = v.level === 'klient' ? '<span class="label label-primary">KLIENT</span>' : '<span class="label label-success">UCZESTNIK</span>';
+                    var produkt = v.produkt;
                     var rowNode = table.row.add( [
-                        '<a href="/klientKarta&id='+v.klient_id+'" target="_blank">'+v.klient+'&nbsp;<small><span class="glyphicon glyphicon-new-window"></span></small></a>', 
+                        '<a href="/klientKarta&id='+v.klient_id+'" target="_blank">'+v.klient+'&nbsp;<small><span class="glyphicon glyphicon-new-window"></span></small></a>',
                         d4,
                         v.email,
                         level,
+                        produkt,
                         '<input data-klient-id="'+v.klient_id+'" type="checkbox">'
-                    ] 
+                    ]
                     ).node();
                     $(rowNode).attr('id','klient-'+v.klient_id+'-row');
-                    $('td:eq(4),td:eq(5)',rowNode).addClass( 'text-center');
+                    $('td:eq(4),td:eq(6)',rowNode).addClass( 'text-center');
                 });
                 table.draw();
             }
